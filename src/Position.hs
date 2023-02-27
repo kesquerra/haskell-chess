@@ -44,6 +44,11 @@ module Position where
     isOpponentKing _ _ = False
 
 
+    sqInPos :: Square -> [Position] -> Bool
+    sqInPos sq ps = sq `elem` map square ps
+
+    notSqInPos :: Square -> [Position] -> Bool
+    notSqInPos sq ps = sq `notElem` map square ps
 
 
     

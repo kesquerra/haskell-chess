@@ -25,7 +25,6 @@ module Board where
     instance Show Board where
         show = boardString
 
-
     emptyBoard :: Board
     emptyBoard = B [Pos (Sq x y) Nothing | x <- [1..8], y <- [1..8]]
 
@@ -78,85 +77,80 @@ module Board where
     possiblePositions _ _ = []
 
     sqToPos :: Board -> Maybe Square -> Maybe Position
-    sqToPos b sq = case sq of
-        Nothing -> Nothing
-        Just v -> Just $ Pos v (getPiece b v)
+    sqToPos b sq = sq >>= \v -> Just $ Pos v (getPiece b v)
 
     generateLegalMoves :: Board -> Color -> Square -> [Move]
-    generateLegalMoves b c sq = possiblePositions b (getPosition b sq) >>= 
-        \m -> moveSet b (getPosition b sq) c m
+    generateLegalMoves b c sq = possiblePositions b (getPosition b sq) >>= moveSet b (getPosition b sq) c
     
     getMoveSquares :: Board -> Square -> [[Maybe Square]]
     getMoveSquares b sq = case getPiece b sq of
         Nothing -> []
-        Just (Piece c Pawn) -> map (removeForwardPawnCaptures b) (pieceMoves sq (Piece c Pawn)) ++ pawnCaptures b c sq
+        Just (Piece c Pawn) -> map (map (removeCaptureSquare b c)) (pieceMoves sq (Piece c Pawn)) ++ pawnCaptures b c sq
         Just p -> pieceMoves sq p
 
-    -- need to refactor everything below
+    removeCaptureSquare :: Board -> Color -> Maybe Square -> Maybe Square
+    removeCaptureSquare b c sq = sqToPos b sq >>= \pos -> if canCapture c pos then Nothing else sq
 
-    removeForwardPawnCaptures :: Board -> [Maybe Square] -> [Maybe Square]
-    removeForwardPawnCaptures _ [] = []
-    removeForwardPawnCaptures b (x:xs) = case x of
-        Nothing -> removeForwardPawnCaptures b xs
-        Just sq -> case getPiece b sq of
-            Nothing -> x : removeForwardPawnCaptures b xs
-            Just _ -> removeForwardPawnCaptures b xs
-
-    pawnCapture :: Board -> Color -> (Int, Int) -> Square -> Maybe Square
-    pawnCapture b col xy sq = moveXY sq xy >>= \sq2 -> getPiece b sq2 >>= \(Piece c _) -> if col /= c then Just sq2 else Nothing
+    addCaptureSquare :: Board -> Color -> Maybe Square -> Maybe Square
+    addCaptureSquare b c sq = sqToPos b sq >>= \pos -> if canCapture c pos then sq else Nothing
 
     pawnCaptures :: Board -> Color -> Square -> [[Maybe Square]]
-    pawnCaptures b White sq = [[pawnCapture b White (1, 1) sq], [pawnCapture b White (-1, 1) sq]]
-    pawnCaptures b Black sq = [[pawnCapture b Black (1, -1) sq], [pawnCapture b Black (-1, -1) sq]]
+    pawnCaptures b c sq = [[captures (1, if c == White then 1 else -1)], [captures (-1, if c == White then 1 else -1)]]
+        where captures xy = moveXY sq xy >>= \sq2 -> addCaptureSquare b c (Just sq2)
 
     getPositionsFromNext :: Board -> Move -> [[Position]]
-    getPositionsFromNext b m = possiblePositions (addMove b m) (Pos (square (endPos m)) (piece (startPos m)))
+    getPositionsFromNext b m = do 
+        let (b2, pos) = forwardMove b m
+        possiblePositions b2 pos
+
+    forwardMove :: Board -> Move -> (Board, Position)
+    forwardMove b m = (addMove b m, Pos (square (endPos m)) (piece (startPos m)))
 
     isCheckMateMove :: Board -> Color -> Move -> Bool
     isCheckMateMove b c m = checkmate (addMove b m) (opponent c) m
 
     isCheckMove :: Board -> Color -> Move -> Bool
-    isCheckMove b c m = or $ possiblePositions (addMove b m) (Pos (square (endPos m)) (piece (startPos m))) >>= \ps -> case parse (many (parseMove (startPos m) c)) ps of
-        Nothing -> []
-        Just (xs, _) -> return $ any (\m2 -> mtype m2 == Check) xs
+    isCheckMove b c m = or $ getPositionsFromNext b m >>= \ps -> parsePositionsF ps (parseMove (startPos m) c) (return . any (\m2 -> mtype m2 == Check))
 
     moveSet :: Board -> Position -> Color -> [Position] -> [Move]
-    moveSet b pos c ps = case parse (many (parseMove pos c)) ps of
-            Nothing -> []
-            Just (ms, _) -> map (\m -> if isCheckMove b c m then if isCheckMateMove b c m then swapType m Checkmate else swapType m Check else m) ms
+    moveSet b pos c ps = map (swapChecks b c) $ parsePositions ps (parseMove pos c)
 
-    getKingPosition :: Board -> Color -> Maybe Position
-    getKingPosition b c = case parse (many (findKing c)) (positions b) of
-        Just (m, _) -> safeHead (catMaybes m)
-        Nothing -> Nothing
+    swapChecks :: Board -> Color -> Move -> Move
+    swapChecks b c m = if isCheckMove b c m
+        then if isCheckMateMove b c m
+            then swapType m Checkmate
+            else swapType m Check
+        else m
+
+    parseBoard :: Board -> Parser a -> [a]
+    parseBoard b = parsePositions (positions b)
+
+    parseBoardMaybe :: Board -> Parser (Maybe a) -> [a]
+    parseBoardMaybe b p = catMaybes $ parseBoard b p
 
     getColorPieces :: Board -> Color -> [Position]
-    getColorPieces b c = case parse (many (allPieces c)) (positions b) of
-        Just (ps, _) -> catMaybes ps
-        Nothing -> []
+    getColorPieces b c = parseBoardMaybe b (allPieces c)
+    
+    getKingPosition :: Board -> Color -> Maybe Position
+    getKingPosition b c = safeHead $ parseBoardMaybe b (findPiece (Piece c King))
 
     getColorMoves :: Board -> Color -> [[Move]]
-    getColorMoves b c = removeEmpties $ getColorPieces b c >>= \(Pos sq _) -> [generateLegalMoves b c sq]
+    getColorMoves b c = removeEmpties $ getColorPieces b c >>= \(Pos sq _) -> return $ generateLegalMoves b c sq
 
     getColorMovesList :: Board -> Color -> [Move]
     getColorMovesList b c = concat (getColorMoves b c)
     
     getColorPositions :: Board -> Color -> [[Position]]
-    getColorPositions b c = removeEmpties $ getColorPieces b c >>= \(Pos sq _) -> [generateLegalMoves b c sq] >>= \m -> return $ map endPos m
+    getColorPositions b c = removeEmpties $ getColorPieces b c >>= \(Pos sq _) -> return $ map endPos (generateLegalMoves b c sq)
 
     getAttackLanes :: Board -> Color -> [[Position]]
-    getAttackLanes b c = removeEmpties $ getColorPieces b c >>= possiblePositions b >>= 
-        \ps -> case parse (many Parser.empty) ps of
-            Nothing -> []
-            Just (xs, _) -> return xs
+    getAttackLanes b c = removeEmpties $ getColorPieces b c >>= possiblePositions b >>= \ps -> return $ parsePositions ps Parser.empty
 
-    movesOutOfCheck :: Board -> Color -> [Move]
-    movesOutOfCheck b c =  case getKingPosition b c of
-        Nothing -> []
-        Just (Pos sq _) -> Prelude.filter (\m -> square (endPos m) `notElem` map square (concat (getAttackLanes b c))) (generateLegalMoves b c sq)
+    movesOutOfCheck :: Board -> Color -> Maybe [Move]
+    movesOutOfCheck b c =  getKingPosition b c >>= \(Pos sq _) -> Just $ filterByPos (concat (getAttackLanes b c)) notSqInPos (generateLegalMoves b c sq)
 
     getCheckLane :: Board -> Color -> Move -> [[Position]]
-    getCheckLane b c m = possiblePositions b (Pos (square (endPos m)) (piece (startPos m))) >>=
+    getCheckLane b c m = getPositionsFromNext b m >>=
         \case
             [] -> return []
             xs -> case parse (many (movable c)) xs of
@@ -167,10 +161,10 @@ module Board where
                     _ -> return []
 
     blockCheckMoves :: Board -> Color -> Move -> [Move]
-    blockCheckMoves b c m = Prelude.filter (\lm -> square (endPos lm) `elem` map square (concat (getCheckLane b (opponent c) m))) (removePieceMove King (concat (getColorMoves b c)))
+    blockCheckMoves b c m = filterByPos (concat (getCheckLane b (opponent c) m)) sqInPos (removePieceMove King (concat (getColorMoves b c)))
     
     endCheckMoves :: Move -> Board -> Color -> [Move]
-    endCheckMoves m b c = blockCheckMoves b c m ++ movesOutOfCheck b c
+    endCheckMoves m b c = blockCheckMoves b c m ++ fromMaybe [] (movesOutOfCheck b c)
 
     checkmate :: Board -> Color -> Move -> Bool
     checkmate b c m = null $ endCheckMoves m b c

@@ -63,4 +63,8 @@ module Move where
     testMoves :: [Move]
     testMoves = [M (Pos (Sq 4 1) (Just (Piece White Queen))) (Pos (Sq 3 6) Nothing) Move , M (Pos (Sq 4 7) (Just (Piece Black Pawn))) (Pos (Sq 1 1) Nothing) Move]
 
+
+    filterByPos :: [Position] -> (Square -> [Position] -> Bool) -> [Move] -> [Move]
+    filterByPos ps f = filter (\x -> square (endPos x) `f` ps)
+
     

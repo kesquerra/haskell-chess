@@ -96,9 +96,9 @@ module Parser where
             _ -> Just (M p1 p2 Move, ps)
         _ -> Nothing
 
-    findKing :: Color -> Parser (Maybe Position)
-    findKing c = P $ \case
-        ((Pos sq (Just (Piece col King))):ps) -> if col == c then Just (Just (Pos sq (Just (Piece col King))), []) else Just (Nothing, ps)
+    findPiece :: Piece -> Parser (Maybe Position)
+    findPiece p1 = P $ \case
+        ((Pos sq (Just p2)):ps) -> if p1 == p2 then Just (Just (Pos sq (Just p2)), []) else Just (Nothing, ps)
         (_:ps) -> Just (Nothing, ps)
         _ -> Nothing
 
@@ -107,3 +107,14 @@ module Parser where
         ((Pos sq (Just (Piece col p))):ps) -> if col == c then Just (Just (Pos sq (Just (Piece col p))), ps) else Just (Nothing, ps)
         ((Pos _ Nothing):ps) -> Just (Nothing, ps)
         _ -> Nothing
+
+    parsePositions :: [Position] -> Parser a -> [a]
+    parsePositions ps p = case parse (many p) ps of
+        Just (xs, _) -> xs
+        Nothing -> []
+
+    parsePositionsF :: [Position] -> Parser a -> ([a] -> [b]) -> [b]
+    parsePositionsF ps p f = case parse (many p) ps of
+        Just (xs, _) -> f xs
+        Nothing -> []
+        
