@@ -33,7 +33,11 @@ module Parser where
 
     instance Alternative Parser where
         empty = P $ const Nothing
-        (<|>) x y = P $ \b -> f (parse x b) (parse y b)
+        (<|>) = por
+
+
+    por :: Parser a -> Parser a -> Parser a
+    por x y = P $ \b -> f (parse x b) (parse y b)
             where   f (Just a) _ = Just a
                     f Nothing a = a
 
@@ -42,8 +46,16 @@ module Parser where
         (p:ps) -> Just (p, ps)
         [] -> Nothing
 
+    getStop :: Parser Position
+    getStop = P $ \case
+        (p:_) -> Just (p, [])
+        [] -> Nothing
+
     satisfy :: (Position -> Bool) -> Parser Position
     satisfy f = Parser.filter f get
+
+    satisfyStop :: (Position -> Bool) -> Parser Position
+    satisfyStop f = Parser.filter f getStop
 
     filter :: (a -> Bool) -> Parser a -> Parser a
     filter f g = P $ \b -> do
@@ -57,32 +69,32 @@ module Parser where
     capture :: Color -> Parser Position
     capture c = satisfy (canCapture c)
 
-    movable :: Color -> Parser Position
-    movable c = Parser.empty <|> capture c
+    selfcapture :: Color -> Parser Position
+    selfcapture c = satisfy (canCapture (opponent c))
 
-    moveGeneric :: Position -> (Bool, Bool, Bool, Bool) -> Parser Move
-    moveGeneric p1 (a, b, c, d) = P $ \case
-        (p:ps) -> Just (M p1 p a b c d, ps)
+    movable :: Color -> Parser Position
+    movable c = capture c <|> Parser.empty
+
+    movableSelfcapture :: Color -> Parser Position
+    movableSelfcapture c = selfcapture c <|> Parser.empty
+
+    check :: Color -> Parser Position
+    check c = satisfyStop (isOpponentKing c)
+
+    getMove :: Position -> MoveType -> Parser Move
+    getMove p1 mt = P $ \case
+        (p:ps) -> Just (M p1 p mt, ps)
         [] -> Nothing
 
-    checkMove :: Position -> Color -> Parser (Maybe Move)
-    checkMove p1 c = movable c >> P (\case
-        (p:ps) -> case p of
-            (Pos _ (Just (Piece col King))) -> if col /= c then Just (Just (M p1 p True False False False), ps) else Nothing
-            (Pos _ Nothing) -> Just (Nothing, ps)
-            (Pos _ _) -> Nothing
-        [] -> Nothing)
-
-    getMove :: Position -> Parser Move
-    getMove p = moveGeneric p (False, False, False, False)  
-
-    move :: Position -> Parser Move
-    move p = Parser.empty >> getMove p
-
-    captureMove :: Position -> Color -> Parser Move
-    captureMove p1 c = capture c >> P (\case
-        (p:_) -> Just (M p1 p False False False False, [])
-        [] -> Nothing)
+    parseMove :: Position -> Color -> Parser Move
+    parseMove p1 c1 = P $ \case
+        (p2:ps) -> case p2 of
+            (Pos _ (Just (Piece c2 King))) -> if c1 /= c2
+                then Just (M p1 p2 Check, []) 
+                else Nothing
+            (Pos _ (Just (Piece c2 _))) -> if c1 /= c2 then Just (M p1 p2 Capture, []) else Nothing
+            _ -> Just (M p1 p2 Move, ps)
+        _ -> Nothing
 
     findKing :: Color -> Parser (Maybe Position)
     findKing c = P $ \case
@@ -90,5 +102,8 @@ module Parser where
         (_:ps) -> Just (Nothing, ps)
         _ -> Nothing
 
-
-    
+    allPieces :: Color -> Parser (Maybe Position)
+    allPieces c = P $ \case
+        ((Pos sq (Just (Piece col p))):ps) -> if col == c then Just (Just (Pos sq (Just (Piece col p))), ps) else Just (Nothing, ps)
+        ((Pos _ Nothing):ps) -> Just (Nothing, ps)
+        _ -> Nothing

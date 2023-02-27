@@ -6,10 +6,13 @@ module Position where
     import Art
 
     data Position = Pos Square (Maybe Piece)
+        deriving (Eq, Ord)
 
     instance Show Position where
         show (Pos sq p) = show sq ++ ": " ++ show p
 
+    square :: Position -> Square
+    square (Pos sq _) = sq
 
     piece :: Position -> Maybe Piece
     piece (Pos _ p) = p
@@ -36,6 +39,9 @@ module Position where
     canCapture c (Pos _ (Just (Piece col _))) = col /= c
     canCapture _ _ = False
 
+    isOpponentKing :: Color -> Position -> Bool
+    isOpponentKing c (Pos _ (Just (Piece col King))) = col /= c
+    isOpponentKing _ _ = False
 
 
 

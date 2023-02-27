@@ -2,6 +2,7 @@
 module Square where 
     import Convert
     import Piece
+    import Color
 
     data Square = Sq {
         file :: Int,
@@ -12,6 +13,9 @@ module Square where
 
     instance Show Square where
         show = toString
+
+    fileString :: Square -> String
+    fileString sq = intToChar (file sq) : ""
 
     fromString :: String -> Maybe Square
     fromString [f, r] = fileCharToInt f >>= \fi -> charToInt r >>= \ri -> Just $ Sq fi ri
@@ -68,10 +72,11 @@ module Square where
     allDirs :: [Direction]
     allDirs = [N, NE, NW, S, SE, SW, E, W]
 
-    pieceMoves :: Square -> PieceType -> [[Maybe Square]]
-    pieceMoves sq Rook = [fullRangeDir x sq | x <- [N, S, E, W]]
-    pieceMoves sq King = [rangeDir x sq 1 | x <- allDirs]
-    pieceMoves sq Knight = [moveXYs sq [(x, y)] | x <- [-1, 1, 2, -2], y <- [-1, 1, 2, -2], abs x /= abs y]
-    pieceMoves sq Bishop = [fullRangeDir x sq | x <- [NE, SE, NW, SW]]
-    pieceMoves sq Queen = [fullRangeDir x sq | x <- allDirs]
-    pieceMoves sq Pawn = [rangeDir N sq 1]
+    pieceMoves :: Square -> Piece -> [[Maybe Square]]
+    pieceMoves sq (Piece _ Rook) = [fullRangeDir x sq | x <- [N, S, E, W]]
+    pieceMoves sq (Piece _ King) = [rangeDir x sq 1 | x <- allDirs]
+    pieceMoves sq (Piece _ Knight) = [moveXYs sq [(x, y)] | x <- [-1, 1, 2, -2], y <- [-1, 1, 2, -2], abs x /= abs y]
+    pieceMoves sq (Piece _ Bishop) = [fullRangeDir x sq | x <- [NE, SE, NW, SW]]
+    pieceMoves sq (Piece _ Queen) = [fullRangeDir x sq | x <- allDirs]
+    pieceMoves sq (Piece White Pawn) = if rank sq == 2 then [rangeDir N sq 2] else [rangeDir N sq 1]
+    pieceMoves sq (Piece Black Pawn) = if rank sq == 7 then [rangeDir S sq 2] else [rangeDir S sq 1]

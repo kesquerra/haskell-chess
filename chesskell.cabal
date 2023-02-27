@@ -29,11 +29,14 @@ library
       Board
       Color
       Convert
+      Game
       Move
       Parser
       Piece
+      Player
       Position
       Square
+      State
   other-modules:
       Paths_chesskell
   hs-source-dirs:

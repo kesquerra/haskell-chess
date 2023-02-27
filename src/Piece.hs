@@ -5,9 +5,10 @@ module Piece where
     import Color
 
     data PieceType = King | Queen | Rook | Bishop | Knight | Pawn
-        deriving (Eq)
+        deriving (Eq, Ord)
 
     data Piece = Piece Color PieceType
+        deriving (Eq, Ord)
 
     instance Show PieceType where
         show t = case t of
