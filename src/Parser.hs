@@ -70,7 +70,7 @@ module Parser where
     capture c = satisfy (canCapture c)
 
     selfcapture :: Color -> Parser Position
-    selfcapture c = satisfy (canCapture (opponent c))
+    selfcapture c = satisfyStop (canCapture (opponent c)) <|> Parser.empty
 
     movable :: Color -> Parser Position
     movable c = capture c <|> Parser.empty

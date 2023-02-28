@@ -2,6 +2,7 @@
 module Player where
     import Move
     import Color
+    import Data.List(sort)
 
     data Player = Player {
         moves :: [Move],
@@ -10,7 +11,7 @@ module Player where
 
 
     stringMoves :: Player -> [[String]]
-    stringMoves p = splitMoves $ map show (moves p)
+    stringMoves p = splitMoves $ map show (sort (moves p))
 
     splitMoves :: [String] -> [[String]]
     splitMoves [] = [[]]

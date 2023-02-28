@@ -75,6 +75,11 @@ module Board where
         \sqs -> return $ mapMaybe (sqToPos b) sqs
     possiblePositions _ _ = []
 
+    possibleCaptures :: Board -> Position -> [[Position]]
+    possibleCaptures b (Pos sq (Just _)) = getCaptureSquares b sq >>=
+        \sqs -> return $ mapMaybe (sqToPos b) sqs
+    possibleCaptures _ _ = []
+
     sqToPos :: Board -> Maybe Square -> Maybe Position
     sqToPos b sq = sq >>= \v -> Just $ Pos v (getPiece b v)
 
@@ -84,8 +89,14 @@ module Board where
     getMoveSquares :: Board -> Square -> [[Maybe Square]]
     getMoveSquares b sq = case getPiece b sq of
         Nothing -> []
-        Just (Piece c Pawn) -> map (map (removeCaptureSquare b c)) (pieceMoves sq (Piece c Pawn)) ++ pawnCaptures b c sq
+        Just (Piece c t) -> getCaptureSquares b sq ++ map (map (removeCaptureSquare b c)) (pieceMoves sq (Piece c Pawn))
+
+    getCaptureSquares :: Board -> Square -> [[Maybe Square]]
+    getCaptureSquares b sq = case getPiece b sq of
+        Nothing -> []
+        Just (Piece c Pawn) -> pawnCaptures b c sq
         Just p -> pieceMoves sq p
+
 
     removeCaptureSquare :: Board -> Color -> Maybe Square -> Maybe Square
     removeCaptureSquare b c sq = sqToPos b sq >>= \pos -> if canCapture c pos then Nothing else sq
@@ -96,6 +107,9 @@ module Board where
     pawnCaptures :: Board -> Color -> Square -> [[Maybe Square]]
     pawnCaptures b c sq = [[captures (1, if c == White then 1 else -1)], [captures (-1, if c == White then 1 else -1)]]
         where captures xy = moveXY sq xy >>= \sq2 -> addCaptureSquare b c (Just sq2)
+
+    pawnEmptyCaptures :: Color -> Square -> [[Maybe Square]]
+    pawnEmptyCaptures c sq = [[moveXY sq (1, if c == White then 1 else -1)], [moveXY sq (-1, if c == White then 1 else -1)]]
 
     getPositionsFromNext :: Board -> Move -> [[Position]]
     getPositionsFromNext b m = do 
@@ -145,8 +159,19 @@ module Board where
     getAttackLanes :: Board -> Color -> [[Position]]
     getAttackLanes b c = removeEmpties $ getColorPieces b c >>= possiblePositions b >>= \ps -> return $ parsePositions ps Parser.empty
 
+    getProtectLanes :: Board -> Color -> [[Position]]
+    getProtectLanes b c = removeEmpties $ getColorPieces b c >>= possibleCaptures b >>= \ps -> return $ parsePositions ps (selfcapture c)
+
+    isSquareProtected :: Board -> Color -> Square -> Bool
+    isSquareProtected b c sq = sqInPos sq (concat (getProtectLanes b c))
+
     movesOutOfCheck :: Board -> Color -> Maybe [Move]
-    movesOutOfCheck b c =  getKingPosition b c >>= \(Pos sq _) -> Just $ filterByPos (concat (getAttackLanes b c)) notSqInPos (generateLegalMoves b c sq)
+    movesOutOfCheck b c =  getKingPosition b c >>= \(Pos sq _) -> Just $ removeProtectedCapture b (filterByPos (concat (getAttackLanes b (opponent c))) notSqInPos (generateLegalMoves b c sq))
+
+    removeProtectedCapture :: Board -> [Move] -> [Move]
+    removeProtectedCapture _ [] = []
+    removeProtectedCapture b ((M (Pos p1 (Just (Piece c King))) (Pos sq (Just p)) Capture):xs) = if isSquareProtected b (opponent c) sq then xs else M (Pos p1 (Just (Piece c King))) (Pos sq (Just p)) Capture : removeProtectedCapture b xs
+    removeProtectedCapture b (x:xs) = x : removeProtectedCapture b xs 
 
     getCheckLane :: Board -> Color -> Move -> [[Position]]
     getCheckLane b c m = getPositionsFromNext b m >>=

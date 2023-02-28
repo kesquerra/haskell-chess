@@ -5,12 +5,13 @@ module Move where
     import Color
     import Square
     import Data.Maybe
+    import Data.String
 
     data Move = M {
         startPos :: Position,
         endPos :: Position,
         mtype :: MoveType
-    }
+    } deriving (Eq)
 
     data MoveType = Check | Checkmate | KingsideCastle | QueensideCastle | Capture | Move | CaptureCheck
         deriving (Eq)
@@ -28,6 +29,9 @@ module Move where
     instance Show Move where
         show = moveString
     
+    instance Ord Move where
+        (<=) x y = piece (startPos x) <= piece (startPos y) 
+
     moveString :: Move -> String
     moveString (M (Pos sq p1)  (Pos pos2 p2) mt)
         | mt == KingsideCastle = "O-O"

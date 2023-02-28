@@ -5,7 +5,7 @@ module Piece where
     import Color
 
     data PieceType = King | Queen | Rook | Bishop | Knight | Pawn
-        deriving (Eq, Ord)
+        deriving (Eq)
 
     data Piece = Piece Color PieceType
         deriving (Eq, Ord)
@@ -19,10 +19,19 @@ module Piece where
                     Rook -> "r"
                     Pawn -> "p"
 
+    instance Ord PieceType where
+        (<=) x y = pieceValue x <= pieceValue y
+
     instance Show Piece where
         show (Piece White t) = map toUpper $ show t
         show (Piece Black t) = show t
 
+    pieceValue :: PieceType -> Int
+    pieceValue King = 0
+    pieceValue Queen = 8
+    pieceValue Rook = 5
+    pieceValue Pawn = 1
+    pieceValue _ = 3
 
     backRankPieces :: Color -> [Piece]
     backRankPieces c = [ Piece c Rook, Piece c Knight, Piece c Bishop,
