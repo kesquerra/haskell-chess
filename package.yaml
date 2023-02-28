@@ -1,10 +1,10 @@
 name:                chesskell
 version:             0.1.0.0
-github:              "githubuser/chesskell"
+github:              "kesquerra/haskell-chess"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2023 Author name here"
+author:              "Kyle Esquerra"
+maintainer:          "esquerra@pdx.edu"
+copyright:           "2023 Kyle Esquerra"
 
 extra-source-files:
 - README.md
