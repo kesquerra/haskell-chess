@@ -23,7 +23,7 @@ module Board where
         mempty = B []
 
     instance Show Board where
-        show = boardString
+        show = boardString White
 
     emptyBoard :: Board
     emptyBoard = B [Pos (Sq x y) Nothing | x <- [1..8], y <- [1..8]]
@@ -35,10 +35,9 @@ module Board where
     flipBoard (B []) = B []
     flipBoard (B b) = flipBoard (B (drop 8 b)) <> B (take 8 b)
 
-    boardString :: Board -> String
-    boardString b = "\n" ++ horizontalLine ++ emptyLineWithBorder ++
-        (positions (flipBoard b) >>= \(Pos sq p) ->
-        if file sq == 1
+    boardString :: Color -> Board ->  String
+    boardString c b = "\n" ++ horizontalLine ++ emptyLineWithBorder ++(positions (if c == White then flipBoard b else b) >>=
+        \(Pos sq p) -> if file sq == 1
             then show (rank sq) ++ " | " ++ positionString (Pos sq p) 
             else positionString (Pos sq p))
         ++ horizontalLine ++ tab ++ tab ++ fileLabels

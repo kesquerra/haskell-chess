@@ -31,7 +31,7 @@ module Position where
 
     positionString :: Position -> String
     positionString (Pos sq p)
-        | file sq == 8  = tab ++ printMaybePiece p ++ tab ++ "|\n" ++ emptyLineWithBorder
+        | file sq == 8  = tab ++ printMaybePiece p ++ tab ++ sideDescription sq ++ emptyLineWithBorder
         | file sq == 1  = printMaybePiece p ++ tab
         | otherwise     = tab ++ printMaybePiece p ++ tab
 

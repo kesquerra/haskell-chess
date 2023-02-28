@@ -80,3 +80,9 @@ module Square where
     pieceMoves sq (Piece _ Queen) = [fullRangeDir x sq | x <- allDirs]
     pieceMoves sq (Piece White Pawn) = if rank sq == 2 then [rangeDir N sq 2] else [rangeDir N sq 1]
     pieceMoves sq (Piece Black Pawn) = if rank sq == 7 then [rangeDir S sq 2] else [rangeDir S sq 1]
+
+    sideDescription :: Square -> String
+    sideDescription sq
+        | rank sq == 8 = "|\tBlack\n"
+        | rank sq == 1 = "|\tWhite\n"
+        | otherwise = "|\n"

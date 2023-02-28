@@ -17,18 +17,17 @@ module Game where
     }
 
     instance Show Game where
-        show g = "\ESC[2J" ++ banner ++ show (board g) ++ stateString g
+        show g = "\ESC[2J" ++ banner ++ "\n" ++ boardString (turn g) (board g) ++ stateString g
     
     stateString :: Game -> String
     stateString g = case state g of
-        State.Check _ -> "\nCheck!\n" ++ turnString g
-        State.Checkmate -> "\nCheckmate!\n"
-        Stalemate -> "\nStalemate!\n"
-        _ -> "\n" ++ turnString g
+        State.Check _ -> "Check!\n" ++ turnString g
+        State.Checkmate -> "Checkmate!\n"
+        Stalemate -> "Stalemate!\n"
+        _ -> turnString g
     
     turnString :: Game -> String
-    turnString g = "Turn: " ++ show (turn g) ++ "\n" ++
-                "Legal Moves: " ++ intercalate ", " (stringMoves $ turnPlayer g)
+    turnString g = show (turn g) ++ "'s legal moves:\n\n" ++ intercalate "\n" (map (intercalate "\t") (stringMoves $ turnPlayer g)) ++ "\n"
 
     turnPlayer :: Game -> Player
     turnPlayer g = if turn g == White then fst (players g) else snd (players g)
