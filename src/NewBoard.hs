@@ -2,18 +2,34 @@ module NewBoard where
     import Bitboard
     import Color
     import Piece
-    import BoardParser
     import qualified Data.Map as M
     import Data.Bits
     import Square
+    import BoardParser
+    import Control.Applicative
     
     data Board = Board {
         white :: Bitboard,
         black :: Bitboard,
         occupied :: Bitboard,
         pieces :: M.Map PieceType Bitboard
-    } deriving Show
+    }
 
+    instance Show Board where
+        show b = parseSet (stringSet b White)
+
+    parseSet :: [(Piece, String)] -> String
+    parseSet xs = case foldr ((<|>) . (\(p, s) -> parse (piece p) s)) Nothing xs of
+        Nothing -> linebreak xs : '.' : parseSet (map parseForward xs)
+        Just (c, cs) -> linebreak xs : if null cs then c : "" else c : parseSet (map parseForward xs)
+
+    linebreak :: [(Piece, String)] -> Char
+    linebreak [] = '\n'
+    linebreak ((_, s):_) = if length s `mod` 8 == 0 then '\n' else '\00'
+
+    stringSet :: Board -> Color -> [(Piece, String)]
+    stringSet b c = map (\(t, bb) -> ((Piece c t), Bitboard.toString bb)) (M.toList (pieces b))
+    
     empty :: Board
     empty = Board Bitboard.empty Bitboard.empty Bitboard.empty M.empty
 
@@ -44,23 +60,21 @@ module NewBoard where
 
     slidingMove :: Board -> Piece -> Bitboard.Direction -> Bitboard
     slidingMove b (Piece c t) d = do
-        let pcb =  getPieceBitboard b (Piece c t)
-        let att = fill d 7 pcb `xor` pcb
-        let blocked = blocks b (Piece c t) d
-        att .&. complement blocked
+        let pcb =  getPieceBitboard b (Piece c t)       -- piece specific bitboard
+        let att = fill d 7 pcb `xor` pcb                -- attack squares for piece (without the piece itself)
+        let blocked = blocks b (Piece c t) d            -- all blocked squares (inluding own pieces)
+        att .&. complement blocked                      -- all attack squares that are not blocked
 
     slidingMoves :: Board -> Piece -> [Bitboard.Direction] -> Bitboard
     slidingMoves b p = foldr ((.|.) . \d -> slidingMove b p d) (getPieceBitboard b p)
-    
 
     pieceMoves :: Board -> Piece -> Bitboard
-    pieceMoves b (Piece c Rook) = slidingMoves b (Piece c Rook) [Bitboard.N, Bitboard.S, Bitboard.E, Bitboard.W]
-    pieceMoves b (Piece c Bishop) = slidingMoves b (Piece c Rook) [Bitboard.NE, Bitboard.SW, Bitboard.SE, Bitboard.NW]
-    pieceMoves b (Piece c Queen) = NewBoard.pieceMoves b (Piece c Rook) <>  NewBoard.pieceMoves b (Piece c Bishop)
-    pieceMoves b (Piece c King) = fillMany 1 (getPieceBitboard b (Piece c King)) Bitboard.allDirs
-    pieceMoves b (Piece c Knight) = foldr ((.|.) . (\((d1, x1), (d2, x2)) -> move d2 x2 (move d1 x1 (getPieceBitboard b (Piece c Knight))))) (getPieceBitboard b (Piece c Knight)) knightMoves
-    pieceMoves b (Piece White Pawn)  = move Bitboard.S 1 (getPieceBitboard b (Piece White Pawn)) <> move Bitboard.S 2 (Bb (0xff `shiftL` 48) .&. getPieceBitboard b (Piece White Pawn))
-    pieceMoves b (Piece Black Pawn)  = move Bitboard.N 1 (getPieceBitboard b (Piece Black Pawn)) <> move Bitboard.N 2 (Bb (0xff `shiftL` 8) .&. getPieceBitboard b (Piece Black Pawn))
+    pieceMoves b (Piece c Rook)     = slidingMoves b (Piece c Rook) [Bitboard.N, Bitboard.S, Bitboard.E, Bitboard.W]
+    pieceMoves b (Piece c Bishop)   = slidingMoves b (Piece c Rook) [Bitboard.NE, Bitboard.SW, Bitboard.SE, Bitboard.NW]
+    pieceMoves b (Piece c Queen)    = NewBoard.pieceMoves b (Piece c Rook) <>  NewBoard.pieceMoves b (Piece c Bishop)
+    pieceMoves b (Piece c King)     = fillMany 1 (getPieceBitboard b (Piece c King)) Bitboard.allDirs
+    pieceMoves b (Piece c Knight)   = knightMoves (getPieceBitboard b (Piece c Knight))
+    pieceMoves b (Piece c Pawn)     = pawnMoves (getPieceBitboard b (Piece c Pawn)) (Piece c Pawn)
 
     testBoard :: Board
     testBoard = addMove (addMove (addMove (addMove start (Piece Black Pawn) (Sq 8 2) (Sq 8 4)) (Piece Black Knight) (Sq 7 1) (Sq 6 3)) (Piece Black Pawn) (Sq 1 2) (Sq 1 3)) (Piece White Knight) (Sq 1 2) (Sq 8 3)

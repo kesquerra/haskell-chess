@@ -81,17 +81,24 @@ module Bitboard where
     
     move :: Direction -> Int -> Bitboard -> Bitboard
     move _ 0 bb = bb
-    move N i bb = move N (i-1) bb `shiftL` 8 .&. complement (Bb 0xff)
-    move S i bb = move S (i-1) bb `shiftR` 8 .&. complement (Bb 0xff `shiftL` 56)
-    move W i bb = move W (i-1) ((bb `shiftR` 1) .&. Bb 0x7f7f7f7f7f7f7f7f)      -- hex value removes the h file due to wraparound shift
-    move E i bb = move E (i-1) ((bb `shiftL` 1) .&. Bb 0xfefefefefefefefe)      -- hex value removes the a file due to wraparound shift
+    move N i bb = move N (i-1) bb `shiftL` 8 .&. complement (Bb 0xff)                                       -- remove the first rank on wraparound
+    move S i bb = move S (i-1) bb `shiftR` 8 .&. complement (Bb 0xff `shiftL` 56)                           -- remove the eigth rank on wraparound
+    move W i bb = move W (i-1) ((bb `shiftR` 1) .&. Bb 0x7f7f7f7f7f7f7f7f)                                  -- hex value removes the h file due to wraparound shift
+    move E i bb = move E (i-1) ((bb `shiftL` 1) .&. Bb 0xfefefefefefefefe)                                  -- hex value removes the a file due to wraparound shift
     move NW i bb = move W i (move N i bb)
     move SW i bb = move W i (move S i bb)
     move NE i bb = move E i (move N i bb)
     move SE i bb = move E i (move S i bb)
 
-    knightMoves :: [((Direction, Int), (Direction, Int))]
-    knightMoves = [((d1, x1), (d2, x2)) | d1 <- [N, S], d2 <- [E,W], x1 <- [2, 1], x2 <- [2,1], x1 /= x2]
+    knightPairs :: [((Direction, Int), (Direction, Int))]
+    knightPairs = [((d1, x1), (d2, x2)) | d1 <- [N, S], d2 <- [E,W], x1 <- [2, 1], x2 <- [2,1], x1 /= x2]   -- (direction, amt) patterns for knight move 
+
+    knightMoves :: Bitboard -> Bitboard
+    knightMoves b = foldr ((.|.) . (\((d1, x1), (d2, x2)) -> move d2 x2 (move d1 x1 b))) b knightPairs
+
+    pawnMoves :: Bitboard -> Piece -> Bitboard 
+    pawnMoves b (Piece White _) = move N 1 b <> move N 2 (Bb (0xff `shiftL` 8) .&. b)                       -- move forward one, if on second rank, move 2
+    pawnMoves b (Piece Black _) = move S 1 b <> move S 2 (Bb (0xff `shiftL` 56) .&. b)                      -- move forward one, if on seventh rank, move 2
     
     fill :: Direction -> Int -> Bitboard -> Bitboard
     fill dir i pcb = foldr ((.|.) . (\x -> move dir x pcb)) pcb [1..i]

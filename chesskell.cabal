@@ -26,11 +26,14 @@ source-repository head
 library
   exposed-modules:
       Art
+      Bitboard
       Board
+      BoardParser
       Color
       Convert
       Game
       Move
+      NewBoard
       Parser
       Piece
       Player
@@ -44,6 +47,7 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , containers
   default-language: Haskell2010
 
 executable chesskell-exe
@@ -56,6 +60,7 @@ executable chesskell-exe
   build-depends:
       base >=4.7 && <5
     , chesskell
+    , containers
   default-language: Haskell2010
 
 test-suite chesskell-test
@@ -69,4 +74,5 @@ test-suite chesskell-test
   build-depends:
       base >=4.7 && <5
     , chesskell
+    , containers
   default-language: Haskell2010
