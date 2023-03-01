@@ -89,7 +89,7 @@ module Board where
     getMoveSquares :: Board -> Square -> [[Maybe Square]]
     getMoveSquares b sq = case getPiece b sq of
         Nothing -> []
-        Just (Piece c t) -> getCaptureSquares b sq ++ map (map (removeCaptureSquare b c)) (pieceMoves sq (Piece c Pawn))
+        Just (Piece c _) -> getCaptureSquares b sq ++ map (map (removeCaptureSquare b c)) (pieceMoves sq (Piece c Pawn))
 
     getCaptureSquares :: Board -> Square -> [[Maybe Square]]
     getCaptureSquares b sq = case getPiece b sq of

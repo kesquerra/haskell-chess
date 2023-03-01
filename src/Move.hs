@@ -5,7 +5,6 @@ module Move where
     import Color
     import Square
     import Data.Maybe
-    import Data.String
 
     data Move = M {
         startPos :: Position,

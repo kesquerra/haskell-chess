@@ -11,20 +11,13 @@ module Piece where
         deriving (Eq, Ord)
 
     instance Show PieceType where
-        show t = case t of
-                    King -> "k"
-                    Queen -> "q"
-                    Bishop -> "b"
-                    Knight -> "n"
-                    Rook -> "r"
-                    Pawn -> "p"
+        show t = pieceTypeChar t : ""
 
     instance Ord PieceType where
         (<=) x y = pieceValue x <= pieceValue y
 
     instance Show Piece where
-        show (Piece White t) = map toUpper $ show t
-        show (Piece Black t) = show t
+        show p = pieceChar p : ""
 
     pieceValue :: PieceType -> Int
     pieceValue King = 0
@@ -32,6 +25,18 @@ module Piece where
     pieceValue Rook = 5
     pieceValue Pawn = 1
     pieceValue _ = 3
+
+    pieceTypeChar :: PieceType -> Char
+    pieceTypeChar King = 'k'
+    pieceTypeChar Queen = 'q'
+    pieceTypeChar Bishop = 'b'
+    pieceTypeChar Knight = 'n'
+    pieceTypeChar Rook = 'r'
+    pieceTypeChar Pawn = 'p'
+
+    pieceChar :: Piece -> Char
+    pieceChar (Piece White t) = toUpper $ pieceTypeChar t
+    pieceChar (Piece Black t) = pieceTypeChar t
 
     backRankPieces :: Color -> [Piece]
     backRankPieces c = [ Piece c Rook, Piece c Knight, Piece c Bishop,
