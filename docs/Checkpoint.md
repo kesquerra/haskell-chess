@@ -1,15 +1,16 @@
-### Project Details
+## Project Details
 ---
 
 Name: Chesskell \
-Project Members: Kyle Esquerra
+Project Members: Kyle Esquerra \
+[Github Repo](https://github.com/kesquerra/haskell-chess)
 
 ---
 
-### Checkpoint
+## Checkpoint
 ---
 
-## Game Module
+### Game Module
 ---
 Export functions:
 - `Game(..)`
@@ -34,7 +35,7 @@ Depends on:
 - `State`
 
 
-## Board Module
+### Board Module
 ---
 Export functions:
 - `Board(..)`
@@ -58,7 +59,7 @@ Depends on:
 - `Color`
 
 
-## Player Module
+### Player Module
 ---
 Export functions:
 - `Player(..)`
@@ -75,7 +76,7 @@ Depends on:
 - `Color`
 
 
-## Move Module
+### Move Module
 ---
 Export functions:
 - `Move(..)`
@@ -99,7 +100,7 @@ Depends on:
 - `Color`
 - `Square`
 
-## State Module
+### State Module
 ---
 Export functions:
 - `State(..)`
@@ -111,7 +112,7 @@ Export functions:
 Depends on:
 - `Move`
 
-## Parser Module
+### Parser Module
 ---
 Export functions:
 - `Parser(..)`
@@ -128,7 +129,7 @@ Depends on:
 - `Move`
 - `Color`
 
-## Position Module
+### Position Module
 ---
 Export functions:
 - `Position(..)`
@@ -146,7 +147,7 @@ Depends on:
 - `Color`
 
 
-## Square Module
+### Square Module
 ---
 Export functions:
 - `Square(..)`
@@ -164,7 +165,7 @@ Depends on:
 - `Piece`
 - `Color`
 
-## Piece Module
+### Piece Module
 ---
 Export functions:
 - `Piece(..)`
@@ -181,7 +182,7 @@ Export functions:
 Depends on:
 - `Color`
 
-## Color Module
+### Color Module
 ---
 Export functions:
 - `Color(..)`
