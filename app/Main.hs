@@ -1,5 +1,5 @@
 module Main (main) where
-import Game(Game(..), newGame, playerTurn, checkmate, getState, changeState)
+import Game(Game(..), newGame, playerTurn, getState)
 import State(State(..))
 
 
