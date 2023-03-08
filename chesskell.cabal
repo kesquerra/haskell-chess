@@ -26,14 +26,11 @@ source-repository head
 library
   exposed-modules:
       Art
-      Bitboard
       Board
-      BoardParser
       Color
       Convert
       Game
       Move
-      NewBoard
       Parser
       Piece
       Player

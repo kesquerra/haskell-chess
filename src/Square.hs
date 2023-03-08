@@ -27,6 +27,15 @@ module Square where
     index :: Square -> Int
     index sq = (rank  sq-1) * 8 + (file sq-1)
 
+    toBit :: Square -> Int
+    toBit sq = ((8 - rank sq) * 8) + (file sq-1)
+
+    fromBit :: Int -> Square
+    fromBit i = Sq (8 - ((63-i)`mod`8)) (((63-i) `div` 8) + 1)
+
+    fromInt :: Int -> Square
+    fromInt i = Sq (i`mod`8+1) (i`div`8+1) 
+
     moveX :: Square -> Int -> Maybe Square
     moveX sq x = if isValidIndex $ file sq + x
         then Just $ Sq (file sq + x) $ rank sq

@@ -5,19 +5,16 @@ module Piece where
     import Color
 
     data PieceType = King | Queen | Rook | Bishop | Knight | Pawn
-        deriving (Eq)
+        deriving (Eq, Show, Ord)
 
     data Piece = Piece Color PieceType
         deriving (Eq, Ord)
 
-    instance Show PieceType where
-        show t = pieceTypeChar t : ""
-
-    instance Ord PieceType where
-        (<=) x y = pieceValue x <= pieceValue y
-
     instance Show Piece where
         show p = pieceChar p : ""
+
+    allPieceTypes :: [PieceType]
+    allPieceTypes = [Pawn, Knight, Bishop, Rook, Queen, King]
 
     pieceValue :: PieceType -> Int
     pieceValue King = 0
