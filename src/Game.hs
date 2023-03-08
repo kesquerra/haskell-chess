@@ -48,7 +48,9 @@ module Game where
 
     getMoves :: Game -> Game
     getMoves (G b ms ps c (State.Check m)) = updateColorMoves (G b ms ps c (State.Check m)) (endCheckMoves m)
-    getMoves g = updateColorMoves g getColorMovesList
+    getMoves g = do 
+        let nb = updateColorMoves g getColorMovesList
+        if null (turnMoves nb) then changeState nb Stalemate else nb
     
 
     playMove :: Game -> Move -> Game
@@ -68,8 +70,8 @@ module Game where
         move <- getMove g
         return $ playMove g move
 
-    checkmate :: Game -> Bool
-    checkmate g = null (turnMoves g)
+    noMoves :: Game -> Bool
+    noMoves g = null (turnMoves g)
 
     changeState :: Game -> State -> Game
     changeState (G b ms ps c _) = G b ms ps c
