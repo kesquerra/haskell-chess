@@ -58,6 +58,8 @@ module Square where
     generateFile :: Int -> [Square]
     generateFile i = [Sq i x | x <- [1..8]]
 
+    -- direction range of squares
+
     rangeDir :: Direction -> Square -> Int -> [Maybe Square]
     rangeDir N sq i = [moveY sq x | x <- [1..i]]
     rangeDir S sq i = [moveY sq (-x) | x <- [1..i]]
@@ -80,6 +82,8 @@ module Square where
 
     allDirs :: [Direction]
     allDirs = [N, NE, NW, S, SE, SW, E, W]
+
+    -- possible piece movements
 
     pieceMoves :: Square -> Piece -> [[Maybe Square]]
     pieceMoves sq (Piece _ Rook) = [fullRangeDir x sq | x <- [N, S, E, W]]

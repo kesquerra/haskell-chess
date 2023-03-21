@@ -86,6 +86,8 @@ module Parser where
         (p:ps) -> Just (M p1 p mt, ps)
         [] -> Nothing
 
+    -- parsing positions into moves
+
     parseMove :: Position -> Color -> Parser Move
     parseMove p1 c1 = P $ \case
         (p2:ps) -> case p2 of
@@ -101,6 +103,8 @@ module Parser where
         ((Pos sq (Just p2)):ps) -> if p1 == p2 then Just (Just (Pos sq (Just p2)), []) else Just (Nothing, ps)
         (_:ps) -> Just (Nothing, ps)
         _ -> Nothing
+
+    -- get all pieces from the board via parsing
 
     allPieces :: Color -> Parser (Maybe Position)
     allPieces c = P $ \case

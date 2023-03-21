@@ -70,6 +70,8 @@ module Board where
     generateMove :: Board -> Square -> Square -> Move
     generateMove b s e = M (getPosition b s) (getPosition b e) Move
 
+    -- get all possible movement positions from squares
+
     possiblePositions :: Board -> Position -> [[Position]]
     possiblePositions b (Pos sq (Just _)) = getMoveSquares b sq >>=
         \sqs -> return $ mapMaybe (sqToPos b) sqs
@@ -82,6 +84,8 @@ module Board where
 
     sqToPos :: Board -> Maybe Square -> Maybe Position
     sqToPos b sq = sq >>= \v -> Just $ Pos v (getPiece b v)
+
+    -- get all possible positions from square, convert to moves
 
     generateLegalMoves :: Board -> Color -> Square -> [Move]
     generateLegalMoves b c sq = possiblePositions b (getPosition b sq) >>= moveSet b (getPosition b sq) c
@@ -147,6 +151,8 @@ module Board where
     getKingPosition :: Board -> Color -> Maybe Position
     getKingPosition b c = safeHead $ parseBoardMaybe b (findPiece (Piece c King))
 
+    -- moves, positions by color
+
     getColorMoves :: Board -> Color -> [[Move]]
     getColorMoves b c = removeEmpties $ getColorPieces b c >>= \(Pos sq _) -> return $ generateLegalMoves b c sq
 
@@ -155,6 +161,8 @@ module Board where
     
     getColorPositions :: Board -> Color -> [[Position]]
     getColorPositions b c = removeEmpties $ getColorPieces b c >>= \(Pos sq _) -> return $ map endPos (generateLegalMoves b c sq)
+
+    -- attack lanes, protect lanes
 
     getAttackLanes :: Board -> Color -> [[Position]]
     getAttackLanes b c = removeEmpties $ getColorPieces b c >>= possiblePositions b >>= \ps -> return $ parsePositions ps Parser.empty

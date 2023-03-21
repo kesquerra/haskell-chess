@@ -46,6 +46,7 @@ module Game where
         then G b ms (Player (f b c1) c1, Player [] c2) c s
         else G b ms (Player [] c1, Player (f b c2) c) c s
 
+    -- get all possible moves in the position for the color whose turn it is
     getMoves :: Game -> Game
     getMoves (G b ms ps c (State.Check m)) = updateColorMoves (G b ms ps c (State.Check m)) (endCheckMoves m)
     getMoves g = do 
@@ -53,9 +54,11 @@ module Game where
         if null (turnMoves nb) then changeState nb Stalemate else nb
     
 
+    -- add the move to the current board and flip turns
     playMove :: Game -> Move -> Game
     playMove (G b ms (Player ms1 c1, Player ms2 c2) c _) m = getMoves $ G (addMove b m) (m:ms) (Player ms1 c1, Player ms2 c2) (opponent c) (moveState m)
 
+    -- collect move from string input
     getMove :: Game -> IO Move
     getMove g = do
         putStrLn "Enter the move you wish to play."
@@ -65,6 +68,8 @@ module Game where
             Nothing -> do print g; putStrLn "Error: Invalid Position"; getMove g
             Just v -> return v
 
+    
+    -- get move from input, play on board
     playerTurn :: Game -> IO Game
     playerTurn g = do 
         move <- getMove g
